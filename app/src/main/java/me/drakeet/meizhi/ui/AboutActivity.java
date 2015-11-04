@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2015 Drakeet <drakeet.me@gmail.com>
+ *
+ * This file is part of Meizhi
+ *
+ * Meizhi is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Meizhi is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Meizhi.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package me.drakeet.meizhi.ui;
 
 import android.os.Bundle;
@@ -23,6 +42,7 @@ public class AboutActivity extends BaseActivity {
     @Bind(R.id.tv_version) TextView mVersionTextView;
     @Bind(R.id.collapsing_toolbar) CollapsingToolbarLayout mCollapsingToolbarLayout;
 
+
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_about);
@@ -37,14 +57,17 @@ public class AboutActivity extends BaseActivity {
         mToolbar.setNavigationOnClickListener(v -> AboutActivity.this.onBackPressed());
     }
 
+
     private void setUpVersionName() {
         mVersionTextView.setText("Version " + BuildConfig.VERSION_NAME);
     }
+
 
     @Override public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_about, menu);
         return true;
     }
+
 
     @Override public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -58,10 +81,12 @@ public class AboutActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     public void onResume() {
         super.onResume();
         MobclickAgent.onResume(this);
     }
+
 
     public void onPause() {
         super.onPause();
