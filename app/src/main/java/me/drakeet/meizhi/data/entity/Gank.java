@@ -17,15 +17,23 @@
  * along with Meizhi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.drakeet.meizhi.data;
+package me.drakeet.meizhi.data.entity;
 
-import java.util.List;
-
-import me.drakeet.meizhi.data.entity.Meizhi;
+import com.litesuits.orm.db.annotation.Column;
+import com.litesuits.orm.db.annotation.Table;
+import java.util.Date;
 
 /**
- * Created by drakeet on 8/9/15.
+ * Created by drakeet on 8/11/15.
  */
-public class MeizhiData extends BaseData {
-    public List<Meizhi> results;
+@Table("ganks") public class Gank extends Soul {
+
+    @Column("url") public String url;
+    @Column("type") public String type;
+    @Column("desc") public String desc;
+    @Column("who") public String who;
+    @Column("used") public boolean used;
+    @Column("createdAt") public Date createdAt;
+    @Column("updatedAt") public Date updatedAt;
+    @Column("publishedAt") public Date publishedAt;
 }

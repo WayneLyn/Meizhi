@@ -37,7 +37,8 @@ public abstract class SwipeRefreshBaseActivity extends ToolbarActivity {
     private boolean mIsRequestDataRefresh = false;
 
 
-    @Override public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
+    @Override
+    public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
         ButterKnife.bind(this);
     }
@@ -54,11 +55,12 @@ public abstract class SwipeRefreshBaseActivity extends ToolbarActivity {
             mSwipeRefreshLayout.setColorSchemeResources(R.color.refresh_progress_3,
                     R.color.refresh_progress_2, R.color.refresh_progress_1);
             // do not use lambda!!
-            mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                @Override public void onRefresh() {
-                    requestDataRefresh();
-                }
-            });
+            mSwipeRefreshLayout.setOnRefreshListener(
+                    new SwipeRefreshLayout.OnRefreshListener() {
+                        @Override public void onRefresh() {
+                            requestDataRefresh();
+                        }
+                    });
         }
     }
 
@@ -94,8 +96,7 @@ public abstract class SwipeRefreshBaseActivity extends ToolbarActivity {
     }
 
 
-    public void setSwipeableChildren(
-            MultiSwipeRefreshLayout.CanChildScrollUpCallback canChildScrollUpCallback) {
+    public void setSwipeableChildren(MultiSwipeRefreshLayout.CanChildScrollUpCallback canChildScrollUpCallback) {
         mSwipeRefreshLayout.setCanChildScrollUpCallback(canChildScrollUpCallback);
     }
 

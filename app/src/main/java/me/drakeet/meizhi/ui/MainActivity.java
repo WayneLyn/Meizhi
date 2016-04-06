@@ -45,10 +45,10 @@ import java.util.List;
 import me.drakeet.meizhi.App;
 import me.drakeet.meizhi.R;
 import me.drakeet.meizhi.data.MeizhiData;
+import me.drakeet.meizhi.data.entity.Gank;
+import me.drakeet.meizhi.data.entity.Meizhi;
 import me.drakeet.meizhi.data.休息视频Data;
-import me.drakeet.meizhi.event.OnMeizhiTouchListener;
-import me.drakeet.meizhi.model.Gank;
-import me.drakeet.meizhi.model.Meizhi;
+import me.drakeet.meizhi.func.OnMeizhiTouchListener;
 import me.drakeet.meizhi.ui.adapter.MeizhiListAdapter;
 import me.drakeet.meizhi.ui.base.SwipeRefreshBaseActivity;
 import me.drakeet.meizhi.util.AlarmManagerUtils;
@@ -66,11 +66,10 @@ public class MainActivity extends SwipeRefreshBaseActivity {
 
     @Bind(R.id.rv_meizhi) RecyclerView mRecyclerView;
 
-    MeizhiListAdapter mMeizhiListAdapter;
-    List<Meizhi> mMeizhiList;
-    boolean mIsFirstTimeTouchBottom = true;
-    int mPage = 1;
-
+    private MeizhiListAdapter mMeizhiListAdapter;
+    private List<Meizhi> mMeizhiList;
+    private boolean mIsFirstTimeTouchBottom = true;
+    private int mPage = 1;
     private boolean mMeizhiBeTouched;
 
 
@@ -84,7 +83,8 @@ public class MainActivity extends SwipeRefreshBaseActivity {
         ButterKnife.bind(this);
         mMeizhiList = new ArrayList<>();
         QueryBuilder query = new QueryBuilder(Meizhi.class);
-        query.limit(1, 10);
+        query.appendOrderDescBy("publishedAt");
+        query.limit(0, 10);
         mMeizhiList.addAll(App.sDb.query(query));
 
         setupRecyclerView();
@@ -108,18 +108,21 @@ public class MainActivity extends SwipeRefreshBaseActivity {
 
 
     private void setupRecyclerView() {
-        final StaggeredGridLayoutManager layoutManager =
-                new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+        final StaggeredGridLayoutManager layoutManager
+                = new StaggeredGridLayoutManager(2,
+                StaggeredGridLayoutManager.VERTICAL);
         mRecyclerView.setLayoutManager(layoutManager);
         mMeizhiListAdapter = new MeizhiListAdapter(this, mMeizhiList);
         mRecyclerView.setAdapter(mMeizhiListAdapter);
         new Once(this).show("tip_guide_6", () -> {
-            Snackbar.make(mRecyclerView, getString(R.string.tip_guide), Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.i_know, v -> {})
+            Snackbar.make(mRecyclerView, getString(R.string.tip_guide),
+                    Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.i_know, v -> {
+                    })
                     .show();
         });
 
-        mRecyclerView.addOnScrollListener(getScrollToBottomListener(layoutManager));
+        mRecyclerView.addOnScrollListener(getOnBottomListener(layoutManager));
         mMeizhiListAdapter.setOnMeizhiTouchListener(getOnMeizhiTouchListener());
     }
 
@@ -131,59 +134,60 @@ public class MainActivity extends SwipeRefreshBaseActivity {
      */
     private void loadData(boolean clean) {
         mLastVideoIndex = 0;
-        Subscription s = Observable.zip(sDrakeet.getMeizhiData(mPage), sDrakeet.get休息视频Data(mPage),
-                                        this::createMeizhiDataWith休息视频Desc)
-                                   .map(meizhiData -> meizhiData.results)
-                                   .flatMap(Observable::from)
-                                   .toSortedList((meizhi1, meizhi2) -> meizhi2.publishedAt.compareTo(
-                                           meizhi1.publishedAt))
-                                   .doOnNext(this::saveMeizhis)
-                                   .observeOn(AndroidSchedulers.mainThread())
-                                   .subscribe(meizhis -> {
-                                       if (clean) mMeizhiList.clear();
-                                       mMeizhiList.addAll(meizhis);
-                                       mMeizhiListAdapter.notifyDataSetChanged();
-                                       setRequestDataRefresh(false);
-                                   }, throwable -> loadError(throwable));
+        // @formatter:off
+        Subscription s = Observable
+               .zip(sGankIO.getMeizhiData(mPage),
+                     sGankIO.get休息视频Data(mPage),
+                     this::createMeizhiDataWith休息视频Desc)
+               .map(meizhiData -> meizhiData.results)
+               .flatMap(Observable::from)
+               .toSortedList((meizhi1, meizhi2) ->
+                     meizhi2.publishedAt.compareTo(meizhi1.publishedAt))
+               .doOnNext(this::saveMeizhis)
+               .observeOn(AndroidSchedulers.mainThread())
+               .finallyDo(() -> setRequestDataRefresh(false))
+               .subscribe(meizhis -> {
+                   if (clean) mMeizhiList.clear();
+                   mMeizhiList.addAll(meizhis);
+                   mMeizhiListAdapter.notifyDataSetChanged();
+                   setRequestDataRefresh(false);
+               }, throwable -> loadError(throwable));
+        // @formatter:on
         addSubscription(s);
     }
 
 
     private void loadError(Throwable throwable) {
         throwable.printStackTrace();
-        setRequestDataRefresh(false);
-        Snackbar.make(mRecyclerView, R.string.snap_load_fail, Snackbar.LENGTH_LONG)
-                .setAction(R.string.retry, v -> {requestDataRefresh();})
-                .show();
+        Snackbar.make(mRecyclerView, R.string.snap_load_fail,
+                Snackbar.LENGTH_LONG).setAction(R.string.retry, v -> {
+            requestDataRefresh();
+        }).show();
     }
 
 
     private void saveMeizhis(List<Meizhi> meizhis) {
-        for (Meizhi meizhi : meizhis) {
-            Meizhi findM = App.sDb.queryById(meizhi.id, Meizhi.class);
-            if (findM == null) {
-                App.sDb.insert(meizhi, ConflictAlgorithm.Replace);
-            }
-        }
+        App.sDb.insert(meizhis, ConflictAlgorithm.Replace);
     }
 
 
-    private MeizhiData createMeizhiDataWith休息视频Desc(MeizhiData mzData, 休息视频Data love) {
-        for (int i = 0; i < mzData.results.size(); i++) {
-            Meizhi m = mzData.results.get(i);
-            m.desc = m.desc + " " + getFirstVideoDescOfTheDayOf(m.publishedAt, love.results);
+    private MeizhiData createMeizhiDataWith休息视频Desc(MeizhiData data, 休息视频Data love) {
+        for (Meizhi meizhi : data.results) {
+            meizhi.desc = meizhi.desc + " " +
+                    getFirstVideoDesc(meizhi.publishedAt, love.results);
         }
-        return mzData;
+        return data;
     }
 
 
     private int mLastVideoIndex = 0;
 
 
-    private String getFirstVideoDescOfTheDayOf(Date publishedAt, List<Gank> results) {
+    private String getFirstVideoDesc(Date publishedAt, List<Gank> results) {
         String videoDesc = "";
         for (int i = mLastVideoIndex; i < results.size(); i++) {
             Gank video = results.get(i);
+            if (video.publishedAt == null) video.publishedAt = video.createdAt;
             if (DateUtils.isTheSameDay(publishedAt, video.publishedAt)) {
                 videoDesc = video.desc;
                 mLastVideoIndex = i;
@@ -196,26 +200,6 @@ public class MainActivity extends SwipeRefreshBaseActivity {
 
     private void loadData() {
         loadData(/* clean */false);
-    }
-
-
-    RecyclerView.OnScrollListener getScrollToBottomListener(StaggeredGridLayoutManager layoutManager) {
-        return new RecyclerView.OnScrollListener() {
-            @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
-                boolean isBottom = layoutManager.findLastCompletelyVisibleItemPositions(new int[2])[1]
-                        >= mMeizhiListAdapter.getItemCount() - PRELOAD_SIZE;
-                if (!mSwipeRefreshLayout.isRefreshing() && isBottom) {
-                    if (!mIsFirstTimeTouchBottom) {
-                        mSwipeRefreshLayout.setRefreshing(true);
-                        mPage += 1;
-                        loadData();
-                    }
-                    else {
-                        mIsFirstTimeTouchBottom = false;
-                    }
-                }
-            }
-        };
     }
 
 
@@ -250,23 +234,23 @@ public class MainActivity extends SwipeRefreshBaseActivity {
 
 
     private void startPictureActivity(Meizhi meizhi, View transitView) {
-        Intent i = new Intent(MainActivity.this, PictureActivity.class);
-        i.putExtra(PictureActivity.EXTRA_IMAGE_URL, meizhi.url);
-        i.putExtra(PictureActivity.EXTRA_IMAGE_TITLE, meizhi.desc);
-
-        ActivityOptionsCompat optionsCompat =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, transitView,
-                                                                   PictureActivity.TRANSIT_PIC);
+        Intent intent = PictureActivity.newIntent(MainActivity.this, meizhi.url,
+                meizhi.desc);
+        ActivityOptionsCompat optionsCompat
+                = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                MainActivity.this, transitView, PictureActivity.TRANSIT_PIC);
         try {
-            ActivityCompat.startActivity(MainActivity.this, i, optionsCompat.toBundle());
+            ActivityCompat.startActivity(MainActivity.this, intent,
+                    optionsCompat.toBundle());
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
-            startActivity(i);
+            startActivity(intent);
         }
     }
 
 
-    @Override public void onToolbarClick() {mRecyclerView.smoothScrollToPosition(0);}
+    @Override
+    public void onToolbarClick() {mRecyclerView.smoothScrollToPosition(0);}
 
 
     @OnClick(R.id.main_fab) public void onFab(View v) {
@@ -316,10 +300,35 @@ public class MainActivity extends SwipeRefreshBaseActivity {
                 item.setChecked(isChecked);
                 PreferencesLoader loader = new PreferencesLoader(this);
                 loader.saveBoolean(R.string.action_notifiable, isChecked);
-                ToastUtils.showShort(isChecked ? R.string.notifiable_on : R.string.notifiable_off);
+                ToastUtils.showShort(isChecked
+                                     ? R.string.notifiable_on
+                                     : R.string.notifiable_off);
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+
+    RecyclerView.OnScrollListener getOnBottomListener(StaggeredGridLayoutManager layoutManager) {
+        return new RecyclerView.OnScrollListener() {
+            @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
+                boolean isBottom =
+                        layoutManager.findLastCompletelyVisibleItemPositions(
+                                new int[2])[1] >=
+                                mMeizhiListAdapter.getItemCount() -
+                                        PRELOAD_SIZE;
+                if (!mSwipeRefreshLayout.isRefreshing() && isBottom) {
+                    if (!mIsFirstTimeTouchBottom) {
+                        mSwipeRefreshLayout.setRefreshing(true);
+                        mPage += 1;
+                        loadData();
+                    }
+                    else {
+                        mIsFirstTimeTouchBottom = false;
+                    }
+                }
+            }
+        };
     }
 
 

@@ -126,7 +126,8 @@ public class LoveVideoView extends WebView {
     }
 
 
-    private class Chrome extends WebChromeClient implements MediaPlayer.OnCompletionListener {
+    private class Chrome extends WebChromeClient
+            implements MediaPlayer.OnCompletionListener {
 
         @Override public void onCompletion(MediaPlayer player) {
             if (player != null) {

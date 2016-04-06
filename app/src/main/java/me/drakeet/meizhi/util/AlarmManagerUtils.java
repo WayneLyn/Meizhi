@@ -32,12 +32,11 @@ import me.drakeet.meizhi.service.AlarmReceiver;
 public class AlarmManagerUtils {
 
     public static void register(Context context) {
-
         Calendar today = Calendar.getInstance();
         Calendar now = Calendar.getInstance();
 
         today.set(Calendar.HOUR_OF_DAY, 12);
-        today.set(Calendar.MINUTE, 11);
+        today.set(Calendar.MINUTE, 24);
         today.set(Calendar.SECOND, 38);
 
         if (now.after(today)) {
@@ -47,10 +46,10 @@ public class AlarmManagerUtils {
         Intent intent = new Intent("me.drakeet.meizhi.alarm");
         intent.setClass(context, AlarmReceiver.class);
 
-        PendingIntent pi =
-                PendingIntent.getBroadcast(context, 520, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        PendingIntent broadcast = PendingIntent.getBroadcast(context, 520, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        am.set(AlarmManager.RTC_WAKEUP, today.getTimeInMillis(), pi);
+        manager.set(AlarmManager.RTC_WAKEUP, today.getTimeInMillis(), broadcast);
     }
 }

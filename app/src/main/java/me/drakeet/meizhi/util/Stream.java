@@ -17,20 +17,27 @@
  * along with Meizhi.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.drakeet.meizhi.model;
+package me.drakeet.meizhi.util;
 
-import com.litesuits.orm.db.annotation.Column;
-import com.litesuits.orm.db.annotation.NotNull;
-import com.litesuits.orm.db.annotation.PrimaryKey;
-import com.litesuits.orm.db.annotation.Unique;
-import java.io.Serializable;
+import rx.Observable;
 
 /**
  * Created by drakeet(http://drakeet.me)
- * Date: 8/18/15 13:55
+ * Date: 15/11/11 12:00
  */
-public class Soul implements Serializable {
-
-    @PrimaryKey(PrimaryKey.AssignType.AUTO_INCREMENT) @Column("_id") public long id;
-    @NotNull @Unique @Column("objectId") public String objectId;
+public class Stream<T> extends Observable<T> {
+    /**
+     * Creates an Observable with a Function to execute when it is subscribed to.
+     * <p>
+     * <em>Note:</em> Use {@link #create(OnSubscribe)} to create an Observable, instead
+     * of
+     * this constructor,
+     * unless you specifically have a need for inheritance.
+     *
+     * @param f {@link OnSubscribe} to be executed when {@link #subscribe(Subscriber)} is
+     * called
+     */
+    protected Stream(OnSubscribe<T> f) {
+        super(f);
+    }
 }

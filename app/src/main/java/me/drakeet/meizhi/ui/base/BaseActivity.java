@@ -22,7 +22,7 @@ package me.drakeet.meizhi.ui.base;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
-import me.drakeet.meizhi.Drakeet;
+import me.drakeet.meizhi.GankApi;
 import me.drakeet.meizhi.DrakeetFactory;
 import me.drakeet.meizhi.R;
 import me.drakeet.meizhi.ui.AboutActivity;
@@ -37,7 +37,7 @@ import rx.subscriptions.CompositeSubscription;
  */
 public class BaseActivity extends AppCompatActivity {
 
-    public static final Drakeet sDrakeet = DrakeetFactory.getSingleton();
+    public static final GankApi sGankIO = DrakeetFactory.getGankIOSingleton();
 
     private CompositeSubscription mCompositeSubscription;
 
@@ -79,7 +79,8 @@ public class BaseActivity extends AppCompatActivity {
             ToastUtils.showLongX2(getString(R.string.tip_login_github));
         });
         String url = getString(R.string.url_login_github);
-        Intent intent = WebActivity.newIntent(this, url, getString(R.string.action_github_login));
+        Intent intent = WebActivity.newIntent(this, url,
+                getString(R.string.action_github_login));
         startActivity(intent);
     }
 
